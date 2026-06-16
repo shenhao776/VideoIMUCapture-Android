@@ -90,3 +90,8 @@ __pycache__
 
 #Release
 android_app/app/release
+
+
+# data
+*.csv
+*.pb3
