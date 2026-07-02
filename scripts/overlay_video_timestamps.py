@@ -1,8 +1,11 @@
 import argparse
 import datetime
 import os
+import sys
 
 import cv2
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "protobuf"))
 
 from recording_pb2 import VideoCaptureData
 
@@ -57,9 +60,15 @@ def overlay_timestamps_on_video(input_dir, output_path=None):
 
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    rotate_to_landscape = height > width
+
+    if rotate_to_landscape:
+        output_size = (height, width)
+    else:
+        output_size = (width, height)
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    writer = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+    writer = cv2.VideoWriter(output_path, fourcc, fps, output_size)
     if not writer.isOpened():
         cap.release()
         raise RuntimeError(f"Failed to create output video: {output_path}")
@@ -74,6 +83,9 @@ def overlay_timestamps_on_video(input_dir, output_path=None):
         ts_text = frame_to_text.get(frame_index)
         if ts_text is None:
             ts_text = frame_to_text.get(frame_index + 1, "frame_ts: N/A")
+
+        if rotate_to_landscape:
+            frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
         cv2.putText(
             frame,
